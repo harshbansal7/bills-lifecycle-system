@@ -1,0 +1,10 @@
+src/
+├── components/
+│   ├── BillForm.jsx        # Form to create new bills
+│   ├── BillList.jsx        # List of all bills with search
+│   ├── BillDetails.jsx     # Detailed view of a bill with status updates
+│   ├── StatusStepper.jsx   # Visual representation of bill status
+│   └── Layout.jsx          # Common layout with navigation
+├── services/
+│   └── api.js             # API calls using axios
+└── App.jsx                # Main component with routing 

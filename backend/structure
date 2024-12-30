@@ -1,0 +1,13 @@
+backend/
+├── app.py
+├── config.py
+├── models/
+│   ├── __init__.py
+│   └── bill.py
+├── routes/
+│   ├── __init__.py
+│   └── bill_routes.py
+├── services/
+│   ├── __init__.py
+│   └── bill_service.py
+└── requirements.txt 
