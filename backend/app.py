@@ -4,14 +4,20 @@ from routes.employee_routes import employee_bp
 from routes.bill_routes import bill_bp
 from pymongo import MongoClient
 from config import Config
+import os
 
 def create_app():
     app = Flask(__name__)
     
-    # Configure CORS
+    # Configure CORS with environment-specific origins
+    allowed_origins = [
+        "http://localhost:5173",  # Local development
+        os.getenv('FRONTEND_URL', '')  # Production frontend
+    ]
+    
     CORS(app, resources={
         r"/api/*": {
-            "origins": ["http://localhost:5173"],
+            "origins": allowed_origins,
             "methods": ["GET", "POST", "PUT", "DELETE"],
             "allow_headers": ["Content-Type"]
         }
@@ -25,9 +31,13 @@ def create_app():
     app.register_blueprint(employee_bp, url_prefix='/api')
     app.register_blueprint(bill_bp, url_prefix='/api')
     
+    @app.route('/')
+    def home():
+        return {"status": "healthy", "message": "API is running"}
+    
     return app
 
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(host='0.0.0.0', port=int(os.getenv('PORT', 8000))) 

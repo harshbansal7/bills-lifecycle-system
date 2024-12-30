@@ -1,1 +1,3 @@
-MONGO_URI=
+MONGO_URI=mongodb://localhost:27017/bills_management
+PORT=8000
+FRONTEND_URL=http://localhost:5173 
