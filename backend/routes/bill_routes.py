@@ -17,8 +17,7 @@ def record_params(setup_state):
 def create_bill():
     data = request.get_json()
     required_fields = ['bill_number', 'receipt_date', 'employee_id', 'employee_name', 
-                      'dependent_name', 'relationship', 'treatment_period_from', 
-                      'treatment_period_to', 'amount_claimed', 'hospital']
+                      'dependent_name', 'relationship', 'amount_claimed', 'hospital']
     
     if not all(field in data for field in required_fields):
         return jsonify({"error": "Missing required fields"}), 400

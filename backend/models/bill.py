@@ -32,16 +32,27 @@ class StatusUpdate:
 
 class Bill:
     def __init__(self, bill_number, receipt_date, employee_id, employee_name, dependent_name, 
-                 relationship, treatment_period_from, treatment_period_to, amount_claimed, hospital, sub_division="Unknown"):
+                 relationship, treatment_period_from=None, treatment_period_to=None, amount_claimed=None, hospital=None, sub_division="Unknown"):
         self.bill_number = bill_number
         self.receipt_date = datetime.fromisoformat(receipt_date.replace('Z', '')) if isinstance(receipt_date, str) else receipt_date
         self.employee_id = employee_id
         self.employee_name = employee_name
         self.dependent_name = dependent_name
         self.relationship = relationship
-        self.treatment_period_from = datetime.fromisoformat(treatment_period_from.replace('Z', '')) if isinstance(treatment_period_from, str) else treatment_period_from
-        self.treatment_period_to = datetime.fromisoformat(treatment_period_to.replace('Z', '')) if isinstance(treatment_period_to, str) else treatment_period_to
-        self.amount_claimed = float(amount_claimed)
+        
+        # Handle optional treatment period
+        self.treatment_period_from = (
+            datetime.fromisoformat(treatment_period_from.replace('Z', ''))
+            if treatment_period_from and isinstance(treatment_period_from, str)
+            else treatment_period_from
+        )
+        self.treatment_period_to = (
+            datetime.fromisoformat(treatment_period_to.replace('Z', ''))
+            if treatment_period_to and isinstance(treatment_period_to, str)
+            else treatment_period_to
+        )
+        
+        self.amount_claimed = float(amount_claimed) if amount_claimed else 0
         self.hospital = hospital
         self.created_at = datetime.utcnow()
         self.updated_at = datetime.utcnow()
@@ -62,8 +73,8 @@ class Bill:
             "employee_name": self.employee_name,
             "dependent_name": self.dependent_name,
             "relationship": self.relationship,
-            "treatment_period_from": self.treatment_period_from.isoformat(),
-            "treatment_period_to": self.treatment_period_to.isoformat(),
+            "treatment_period_from": self.treatment_period_from.isoformat() if self.treatment_period_from else None,
+            "treatment_period_to": self.treatment_period_to.isoformat() if self.treatment_period_to else None,
             "amount_claimed": self.amount_claimed,
             "hospital": self.hospital,
             "created_at": self.created_at,

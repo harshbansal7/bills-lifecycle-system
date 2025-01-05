@@ -156,7 +156,7 @@ const EditBill = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     required
                   >
-                    <option value="">Select Dependent</option>
+                    <option value="">Select Patient</option>
                     {selectedEmployee.dependents.map((dependent, index) => (
                       <option key={index} value={dependent.name}>
                         {dependent.name} ({dependent.relation})

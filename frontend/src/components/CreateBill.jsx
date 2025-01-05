@@ -172,7 +172,7 @@ const CreateBill = () => {
                 {selectedEmployee && (
                   <div className="col-span-2">
                     <label className="form-label">
-                      Select Dependent <span className="text-red-500">*</span>
+                      Select Patient <span className="text-red-500">*</span>
                     </label>
                     <select
                       value={formData.dependent_name}
@@ -198,27 +198,25 @@ const CreateBill = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="form-label">
-                    Treatment Period From <span className="text-red-500">*</span>
+                    Treatment Period From
                   </label>
                   <input
                     type="date"
                     name="treatment_period_from"
                     value={formData.treatment_period_from}
                     onChange={handleChange}
-                    required
                     className="form-input"
                   />
                 </div>
                 <div>
                   <label className="form-label">
-                    Treatment Period To <span className="text-red-500">*</span>
+                    Treatment Period To
                   </label>
                   <input
                     type="date"
                     name="treatment_period_to"
                     value={formData.treatment_period_to}
                     onChange={handleChange}
-                    required
                     className="form-input"
                   />
                 </div>
