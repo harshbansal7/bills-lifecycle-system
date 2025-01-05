@@ -9,12 +9,12 @@ class LifeStatus(str, Enum):
     ALIVE = "ALIVE"
     DECEASED = "DECEASED"
 
-class SubDivision(str, Enum):
-    SEWERAGE_1 = "Sewarage Sub Division No 1"
-    WS_2 = "W/S Sub Division No 2"
-    WS_6 = "W/S Sub Division No 6"
-    PH_3 = "PH Division Number 3"
-    OTHER = "Other"
+# class SubDivision(str, Enum):
+#     SEWERAGE_1 = "Sewarage Sub Division No 1"
+#     WS_2 = "W/S Sub Division No 2"
+#     WS_6 = "W/S Sub Division No 6"
+#     PH_3 = "PH Division Number 3"
+#     OTHER = "Other"
 
 class Employee:
     def __init__(self, employee_id, name, father_name=None, designation=None, status="WORKING", 
