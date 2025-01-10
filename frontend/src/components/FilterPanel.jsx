@@ -1,13 +1,15 @@
-import { useState } from 'react';
-import { ChevronDownIcon, ChevronUpIcon, FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
+import { ChevronDownIcon, ChevronUpIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { STATUS_CONFIG } from '../utils/statusConfig';
+import api from '../services/api';
+import { preventWheelChange } from '../utils/helpers';
 
 const FilterPanel = ({ onFilter, onReset }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [employees, setEmployees] = useState([]);
   const [filters, setFilters] = useState({
     bill_number: '',
     employee_id: '',
-    employee_name: '',
     status: '',
     date_from: '',
     date_to: '',
@@ -21,6 +23,19 @@ const FilterPanel = ({ onFilter, onReset }) => {
   });
 
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
+
+  // Fetch employees when component mounts
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const data = await api.getEmployees();
+        setEmployees(data);
+      } catch (err) {
+        console.error('Failed to fetch employees:', err);
+      }
+    };
+    fetchEmployees();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -57,7 +72,6 @@ const FilterPanel = ({ onFilter, onReset }) => {
     setFilters({
       bill_number: '',
       employee_id: '',
-      employee_name: '',
       status: '',
       date_from: '',
       date_to: '',
@@ -109,27 +123,35 @@ const FilterPanel = ({ onFilter, onReset }) => {
               </div>
 
               <div>
-                <label className="form-label">Employee ID</label>
-                <input
-                  type="text"
+                <label className="form-label">Employee</label>
+                <select
                   name="employee_id"
                   value={filters.employee_id}
                   onChange={handleChange}
                   className="form-input"
-                  placeholder="Search by ID"
-                />
+                >
+                  <option value="">All Employees</option>
+                  {employees.map((employee) => (
+                    <option key={employee.employee_id} value={employee.employee_id}>
+                      {employee.name} ({employee.employee_id})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
-                <label className="form-label">Employee Name</label>
-                <input
-                  type="text"
-                  name="employee_name"
-                  value={filters.employee_name}
+                <label className="form-label">Current Status</label>
+                <select
+                  name="status"
+                  value={filters.status}
                   onChange={handleChange}
                   className="form-input"
-                  placeholder="Search by name"
-                />
+                >
+                  <option value="">All Statuses</option>
+                  {Object.keys(STATUS_CONFIG).map(status => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -170,21 +192,6 @@ const FilterPanel = ({ onFilter, onReset }) => {
               <h3 className="text-sm font-medium text-gray-700 mb-3">Advanced Filters</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="form-label">Current Status</label>
-                  <select
-                    name="status"
-                    value={filters.status}
-                    onChange={handleChange}
-                    className="form-input"
-                  >
-                    <option value="">All Statuses</option>
-                    {Object.keys(STATUS_CONFIG).map(status => (
-                      <option key={status} value={status}>{status}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
                   <label className="form-label">Date Range</label>
                   <div className="flex space-x-2">
                     <input
@@ -212,6 +219,7 @@ const FilterPanel = ({ onFilter, onReset }) => {
                       name="amount_from"
                       value={filters.amount_from}
                       onChange={handleChange}
+                      onWheel={preventWheelChange}
                       className="form-input"
                       placeholder="Min"
                     />
@@ -220,6 +228,7 @@ const FilterPanel = ({ onFilter, onReset }) => {
                       name="amount_to"
                       value={filters.amount_to}
                       onChange={handleChange}
+                      onWheel={preventWheelChange}
                       className="form-input"
                       placeholder="Max"
                     />

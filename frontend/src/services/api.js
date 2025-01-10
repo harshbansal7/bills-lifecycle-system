@@ -45,6 +45,11 @@ const getBillsByStatus = (status) => api.get(`/api/bills/status/${status}`).then
 
 const filterBills = (filters) => api.post('/api/bills/filter', filters).then(res => res.data);
 
+const updateStatusEntry = (billId, statusIndex, data) => {
+  const actualBillId = typeof billId === 'object' ? billId.$oid : billId;
+  return api.put(`/api/bills/${actualBillId}/status/${statusIndex}`, data).then(res => res.data);
+};
+
 export default {
   getEmployees,
   getEmployee,
@@ -59,5 +64,6 @@ export default {
   getEmployeeBills,
   updateBillStatus,
   getBillsByStatus,
-  filterBills
+  filterBills,
+  updateStatusEntry
 }; 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import api from '../services/api';
 import { HOSPITALS } from '../utils/constants';
+import { preventWheelChange } from '../utils/helpers';
 
 const CreateBill = () => {
   const navigate = useNavigate();
@@ -225,14 +226,18 @@ const CreateBill = () => {
                     Amount Claimed <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₹</span>
+                    <span className="absolute left-3 top-2 text-gray-500">₹</span>
                     <input
                       type="number"
                       name="amount_claimed"
                       value={formData.amount_claimed}
-                      onChange={handleChange}
-                      required
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        amount_claimed: e.target.value
+                      }))}
+                      onWheel={preventWheelChange}
                       className="form-input pl-8"
+                      required
                     />
                   </div>
                 </div>

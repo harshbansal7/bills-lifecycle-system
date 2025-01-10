@@ -110,4 +110,17 @@ def filter_bills():
         bills = bill_service.filter_bills(filter_data)
         return json.loads(json_util.dumps(bills)), 200
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@bill_bp.route('/bills/<bill_id>/status/<int:status_index>', methods=['PUT'])
+def update_status_entry(bill_id, status_index):
+    data = request.get_json()
+    try:
+        success = bill_service.update_status_entry(bill_id, status_index, data)
+        if not success:
+            return jsonify({"error": "Status entry not found"}), 404
+        return jsonify({"message": "Status entry updated successfully"}), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
         return jsonify({"error": str(e)}), 500 

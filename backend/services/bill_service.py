@@ -112,28 +112,37 @@ class BillService:
             query['bill_number'] = {'$regex': filter_data['bill_number'], '$options': 'i'}
         
         if filter_data.get('employee_id'):
-            query['employee_id'] = {'$regex': filter_data['employee_id'], '$options': 'i'}
-        
-        if filter_data.get('employee_name'):
-            query['employee_name'] = {'$regex': filter_data['employee_name'], '$options': 'i'}
+            query['employee_id'] = filter_data['employee_id']  # Exact match since we're using dropdown
         
         if filter_data.get('status'):
-            query['current_status'] = filter_data['status']
+            status = filter_data['status']
+            # Special handling for "Received From Subdivision" status
+            if status == "Received From Subdivision":
+                query['current_status'] = {'$regex': '^Received From', '$options': 'i'}
+            else:
+                query['current_status'] = status
         
         # Reference number search
         if filter_data.get('reference_search'):
             ref_search = filter_data['reference_search']
             if ref_search.get('number'):
                 if ref_search.get('status'):
-                    # Search for reference number in specific status
-                    query['status_history'] = {
-                        '$elemMatch': {
-                            'status': ref_search['status'],
-                            'reference_number': {'$regex': ref_search['number'], '$options': 'i'}
+                    # Special handling for "Received From Subdivision" in reference search
+                    if ref_search['status'] == "Received From Subdivision":
+                        query['status_history'] = {
+                            '$elemMatch': {
+                                'status': {'$regex': '^Received From', '$options': 'i'},
+                                'reference_number': {'$regex': ref_search['number'], '$options': 'i'}
+                            }
                         }
-                    }
+                    else:
+                        query['status_history'] = {
+                            '$elemMatch': {
+                                'status': ref_search['status'],
+                                'reference_number': {'$regex': ref_search['number'], '$options': 'i'}
+                            }
+                        }
                 else:
-                    # Search for reference number in any status
                     query['status_history.reference_number'] = {
                         '$regex': ref_search['number'],
                         '$options': 'i'
@@ -162,3 +171,36 @@ class BillService:
             query['hospital'] = filter_data['hospital']
 
         return list(self.db.bills.find(query).sort("updated_at", -1))
+
+    def update_status_entry(self, bill_id, status_index, update_data):
+        """Update a specific status entry in the bill's status history"""
+        try:
+            bill = self.db.bills.find_one({"_id": ObjectId(bill_id)})
+            if not bill or "status_history" not in bill:
+                return False
+
+            # Ensure status_index is valid
+            if status_index < 0 or status_index >= len(bill["status_history"]):
+                return False
+
+            # Update the specific status entry
+            bill["status_history"][status_index].update({
+                k: v for k, v in update_data.items()
+                if k in ["reference_number", "approved_amount", "remarks"]
+            })
+
+            # Update the document
+            result = self.db.bills.update_one(
+                {"_id": ObjectId(bill_id)},
+                {
+                    "$set": {
+                        "status_history": bill["status_history"],
+                        # Update latest values if this is the most recent status
+                        "latest_reference_number": bill["status_history"][-1].get("reference_number"),
+                        "latest_approved_amount": bill["status_history"][-1].get("approved_amount")
+                    }
+                }
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            raise ValueError(f"Failed to update status entry: {str(e)}")

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon, PencilIcon } from '@heroicons/react/24/outline';
 import api from '../services/api';
 import { formatDate, formatDateTime, formatAmount } from '../utils/formatters';
 import { STATUS_CONFIG } from '../utils/statusConfig';
+import { preventWheelChange } from '../utils/helpers';
 
 const BILL_STATUSES = {
   'Received From Subdivision': 'bg-blue-100 text-blue-800',
@@ -28,9 +29,38 @@ const formatStatusDate = (dateString) => {
   });
 };
 
-const StatusHistoryItem = ({ update }) => {
-  const config = STATUS_CONFIG[update.status.split(' - ')[0]];
-  
+const StatusHistoryItem = ({ update, index, onEdit, bill }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    reference_number: update.reference_number || '',
+    approved_amount: update.approved_amount || '',
+    remarks: update.remarks || ''
+  });
+  const [error, setError] = useState('');
+  const config = STATUS_CONFIG[update.status];
+
+  // Calculate the actual index since we're displaying in reverse order
+  const actualIndex = bill.status_history.length - 1 - index;
+
+  const handleEdit = async () => {
+    try {
+      await api.updateStatusEntry(bill._id, actualIndex, editData);
+      onEdit(); // Refresh bill data
+      setIsEditing(false);
+    } catch (err) {
+      setError('Failed to update status');
+    }
+  };
+
+  // Reset edit data when update prop changes
+  useEffect(() => {
+    setEditData({
+      reference_number: update.reference_number || '',
+      approved_amount: update.approved_amount || '',
+      remarks: update.remarks || ''
+    });
+  }, [update]);
+
   return (
     <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
       <div className="flex-shrink-0 mt-1">
@@ -42,44 +72,110 @@ const StatusHistoryItem = ({ update }) => {
             <p className={`text-base font-semibold ${BILL_STATUSES[update.status]}`}>
               {update.status}
             </p>
-            {update.status.includes(' - ') && (
-              <p className="text-sm text-gray-600">
-                {update.status.split(' - ')[1]}
-              </p>
-            )}
           </div>
-          <span className="text-sm text-gray-500">
-            {formatStatusDate(update.date)}
-          </span>
-        </div>
-        
-        {/* Status-specific fields */}
-        <div className="space-y-2 mb-3">
-          {config?.fields.map(field => {
-            const value = update[field.name];
-            if (!value) return null;
-            
-            return (
-              <div key={field.name} className="flex items-baseline">
-                <span className="text-sm font-medium text-gray-500 w-32">
-                  {field.label}:
-                </span>
-                <span className="text-sm text-gray-900">
-                  {field.type === 'currency' ? formatAmount(value) : value}
-                </span>
-              </div>
-            );
-          })}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-500">
+              {formatStatusDate(update.date)}
+            </span>
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <PencilIcon className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
-        {/* Remarks section */}
-        {update.remarks && (
-          <div className="mt-2 pt-2 border-t border-gray-200">
-            <p className="text-sm font-medium text-gray-500 mb-1">Remarks</p>
-            <p className="text-sm text-gray-700 whitespace-pre-line">
-              {update.remarks}
-            </p>
+        {isEditing ? (
+          <div className="space-y-3">
+            {error && (
+              <p className="text-sm text-red-600">{error}</p>
+            )}
+            <div>
+              <label className="form-label">Reference Number</label>
+              <input
+                type="text"
+                value={editData.reference_number}
+                onChange={(e) => setEditData(prev => ({
+                  ...prev,
+                  reference_number: e.target.value
+                }))}
+                className="form-input"
+              />
+            </div>
+            <div>
+              <label className="form-label">Approved Amount</label>
+              <input
+                type="number"
+                value={editData.approved_amount}
+                onChange={(e) => setEditData(prev => ({
+                  ...prev,
+                  approved_amount: e.target.value
+                }))}
+                onWheel={preventWheelChange}
+                className="form-input"
+              />
+            </div>
+            <div>
+              <label className="form-label">Remarks</label>
+              <textarea
+                value={editData.remarks}
+                onChange={(e) => setEditData(prev => ({
+                  ...prev,
+                  remarks: e.target.value
+                }))}
+                className="form-input"
+                rows="2"
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                className="px-3 py-1 text-sm border border-gray-300 rounded-md"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleEdit}
+                className="px-3 py-1 text-sm bg-primary-600 text-white rounded-md"
+              >
+                Save
+              </button>
+            </div>
           </div>
+        ) : (
+          <>
+            {/* Status-specific fields */}
+            <div className="space-y-2 mb-3">
+              {config?.fields.map(field => {
+                const value = update[field.name];
+                if (!value) return null;
+                
+                return (
+                  <div key={field.name} className="flex items-baseline">
+                    <span className="text-sm font-medium text-gray-500 w-32">
+                      {field.label}:
+                    </span>
+                    <span className="text-sm text-gray-900">
+                      {field.type === 'currency' ? formatAmount(value) : value}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Remarks section */}
+            {update.remarks && (
+              <div className="mt-2 pt-2 border-t border-gray-200">
+                <p className="text-sm font-medium text-gray-500 mb-1">Remarks</p>
+                <p className="text-sm text-gray-700 whitespace-pre-line">
+                  {update.remarks}
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -177,6 +273,15 @@ const BillDetails = () => {
       setRemarks('');
     } catch (err) {
       setError('Failed to update status');
+    }
+  };
+
+  const handleStatusEdit = async () => {
+    try {
+      const updatedBill = await api.getBill(billId);
+      setBill(updatedBill);
+    } catch (err) {
+      setError('Failed to refresh bill details');
     }
   };
 
@@ -335,6 +440,7 @@ const BillDetails = () => {
                               ...prev,
                               [field.name]: e.target.value
                             }))}
+                            onWheel={preventWheelChange}
                             className="form-input pl-8"
                             required={field.required}
                           />
@@ -391,7 +497,13 @@ const BillDetails = () => {
                   .slice()
                   .reverse()
                   .map((update, index) => (
-                    <StatusHistoryItem key={index} update={update} />
+                    <StatusHistoryItem 
+                      key={`${update.status}-${update.date}-${index}`}
+                      update={update} 
+                      index={index} 
+                      onEdit={handleStatusEdit} 
+                      bill={bill} 
+                    />
                   ))}
               </div>
             </div>
